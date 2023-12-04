@@ -3,12 +3,13 @@
 #include "myodom.h"
 #include <boost/circular_buffer.hpp>
 
-using namespace wx;
+using namespace liu::wx;
 
-CMyOdom::CMyOdom()
-  : Node("CMyOdom")
-  , sub_myodom_(this, "/my_odom")
-  , sub_atp_(this, "/atp_info")
+CMyOdom::CMyOdom(const ros::NodeHandle& pnh)
+  // : Node("CMyOdom")
+  : pnh_(pnh)
+  , sub_myodom_(pnh_, "/my_odom", 5)
+  , sub_atp_(pnh_, "/atp_info", 5)
 {
   // sync_odom_.emplace(sub_myodom_, sub_atp_, 5);
   // sync_odom_->registerCallback(&CMyOdom::OdomCb, this);
@@ -19,14 +20,18 @@ CMyOdom::CMyOdom()
   sync_odom_->registerCallback(&CMyOdom::OdomCb, this);
 
   // pub_my_odom_ = this->create_publisher<sensor_msgs::msg::Imu>("/plot", 10);
-  pub_result_ = this->create_publisher<myresult::msg::MyResult>("/plot", 10);
+  // pub_result_ = this->create_publisher<myresult::msg::MyResult>("/plot", 10);
+  // pub_result_ = pnh_.subscribe("/plot", 10, &CMyOdom::cb_func, this);
+  pub_result_ = pnh_.advertise<myresult::MyResult>("/plot", 10);
  
 }
 
 #define _PUBLISH_VELOCITY_DIRECTLY_
 
-void CMyOdom::OdomCb(const myodom::msg::MyOdom::SharedPtr &myodom_ptr,
-        const atp_info::msg::Atp::SharedPtr &atp_ptr)
+// void CMyOdom::OdomCb(const myodom::msg::MyOdom::SharedPtr &myodom_ptr,
+//         const atp_info::msg::Atp::SharedPtr &atp_ptr)
+void CMyOdom::OdomCb(const myodom::MyOdomConstPtr &myodom_ptr,
+        const atp_info::atpConstPtr &atp_ptr)        
 {
   // std::cout << "received msgs.\n";
   static double atp_calc_odom = 0.0;
@@ -36,7 +41,7 @@ void CMyOdom::OdomCb(const myodom::msg::MyOdom::SharedPtr &myodom_ptr,
   }
 
 #ifdef _PUBLISH_VELOCITY_DIRECTLY_
-  myresult::msg::MyResult result_msg;
+  myresult::MyResult result_msg;
   result_msg.header = myodom_ptr->header;
   result_msg.our_velocity = myodom_ptr->velocity;
   result_msg.atp_velocity = atp_ptr->atp_speed / 100.0;
@@ -53,7 +58,8 @@ void CMyOdom::OdomCb(const myodom::msg::MyOdom::SharedPtr &myodom_ptr,
   result_msg.atp_total_odom = (atp_ptr->atp_calc_odom / 100.0) - atp_calc_odom;
 
   // publish velocity, period odom and total odom.
-  pub_result_->publish(result_msg);
+  // pub_result_->publish(result_msg);
+  pub_result_.publish(result_msg);
 
 /*
   sensor_msgs::msg::Imu odom_msg;

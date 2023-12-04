@@ -8,7 +8,7 @@
 #include <memory>
 #include <string>
 
-#include "rclcpp/rclcpp.hpp"
+// #include "rclcpp/rclcpp.hpp"
 
 // #include <sensor_msgs/msg/imu.hpp>
 
@@ -17,9 +17,10 @@
 //#include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/time_synchronizer.h>
 
-#include <myodom/msg/my_odom.hpp>
-#include <atp_info/msg/atp.hpp>
-#include<myresult/msg/my_result.hpp>
+// #include <myodom/MyOdom.h>
+#include <myodom/MyOdom.h>
+#include <atp_info/atp.h>
+#include<myresult/MyResult.h>
 
 // #include <Eigen/Dense>
 
@@ -28,7 +29,7 @@ using namespace std::chrono_literals;
 using std::placeholders::_1;
 
 
-namespace wx {
+namespace liu::wx {
 
 // using Vector2d = Eigen::Vector2d;
 // using Vector3d = Eigen::Vector3d;
@@ -39,32 +40,37 @@ namespace wx {
 // namespace gm = geometry_msgs;
 namespace mf = message_filters;
 
-class CMyOdom : public rclcpp::Node
+class CMyOdom// : public rclcpp::Node
 {
 public:    
-    CMyOdom();
+    CMyOdom(const ros::NodeHandle& pnh);
 
 
 private:    
-    void OdomCb(const myodom::msg::MyOdom::SharedPtr &myodom_ptr,
-        const atp_info::msg::Atp::SharedPtr &atp_ptr);
+    void OdomCb(const myodom::MyOdomConstPtr &myodom_ptr,
+        // const atp_info::AtpConstPtr &atp_ptr);
+        const atp_info::atpConstPtr &atp_ptr);
 
 public:
 
 private:
-    mf::Subscriber<myodom::msg::MyOdom> sub_myodom_;
-    mf::Subscriber<atp_info::msg::Atp> sub_atp_;
+    ros::NodeHandle pnh_;
+    mf::Subscriber<myodom::MyOdom> sub_myodom_;
+    // mf::Subscriber<atp_info::Atp> sub_atp_;
+    mf::Subscriber<atp_info::atp> sub_atp_;
 
     // using SyncOdom = mf::TimeSynchronizer<myodom::msg::MyOdom, atp_info::msg::Atp>;
     // using SyncOdom = mf::ApproximateTimeSynchronizer<myodom::msg::MyOdom, atp_info::msg::Atp>;
     // std::optional<SyncOdom> sync_odom_;
 
-    typedef message_filters::sync_policies::ApproximateTime<myodom::msg::MyOdom, atp_info::msg::Atp> SyncOdom;
+    // typedef message_filters::sync_policies::ApproximateTime<myodom::MyOdom, atp_info::Atp> SyncOdom;
+    typedef message_filters::sync_policies::ApproximateTime<myodom::MyOdom, atp_info::atp> SyncOdom;
     message_filters::Synchronizer<SyncOdom> *sync_odom_;
 
    
     // rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr pub_my_odom_;
-    rclcpp::Publisher<myresult::msg::MyResult>::SharedPtr pub_result_;
+    // rclcpp::Publisher<myresult::MyResult>::SharedPtr pub_result_;
+    ros::Publisher pub_result_;
 
 };
 

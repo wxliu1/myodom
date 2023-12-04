@@ -1,4 +1,4 @@
-std_msgs/Header header
+Header header
 float32 velocity
 float32 delta_time
 float32 period_odom

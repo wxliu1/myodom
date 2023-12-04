@@ -1,20 +1,32 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="3">
+<package format="2">
   <name>myresult</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="root@todo.todo">root</maintainer>
-  <license>TODO: License declaration</license>
+  <description>The myresult package</description>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <maintainer email="lwx@lwx.com">tl</maintainer>
 
-  <depend>rosidl_default_generators</depend>
-  <depend>std_msgs</depend>
+  <license>TODO</license>
 
-  <member_of_group>rosidl_interface_packages</member_of_group>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>rosmsg</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <build_export_depend>rosmsg</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>rosmsg</exec_depend>
 
+  <build_depend>message_generation</build_depend>
+  <build_depend>message_runtime</build_depend>
+  <exec_depend>message_generation</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <build_type>ament_cmake</build_type>
+    <!-- Other tools can request additional information be placed here -->
+
   </export>
 </package>

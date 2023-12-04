@@ -1,4 +1,4 @@
-std_msgs/Header header
+Header header
 float32 our_velocity
 float32 atp_velocity
 float32 velocity_error

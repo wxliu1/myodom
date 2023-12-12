@@ -34,6 +34,76 @@ void CMyOdom::OdomCb(const myodom::MyOdomConstPtr &myodom_ptr,
         const atp_info::atpConstPtr &atp_ptr)        
 {
   // std::cout << "received msgs.\n";
+#ifdef _PRINT_BEACON_
+  //if(1)
+  {
+    static int prev_beacon_id = 0;
+    TBeacon beacon;
+    beacon.beacon_id = atp_ptr->beacon_id;
+    beacon.beacon_odom = atp_ptr->beacon_odom;
+    bool bl = false;
+    // std::vector<TBeacon>::iterator iter = vec_beacon_.begin();
+    for(auto element : vec_beacon_)
+    {
+      if(element.beacon_id == beacon.beacon_id)
+      {
+        bl = true;
+        break ;
+      }
+    }
+
+    if(!bl)
+    {
+      // found new beacon.
+      vec_beacon_.emplace_back(beacon);
+
+      TCompare compare;
+      compare.beacon_id = beacon.beacon_id;
+      compare.atp_count = 1;
+      compare.atp_calc_odom1 = atp_ptr->atp_calc_odom;
+      compare.our_odom1 = myodom_ptr->total_odom;
+      compare.atp_t1 = atp_ptr->header.stamp.sec + atp_ptr->header.stamp.nsec * (1e-9);
+      compare.our_t1 = myodom_ptr->header.stamp.sec + myodom_ptr->header.stamp.nsec * (1e-9);
+      vec_compare_.emplace_back(compare);
+
+      if(prev_beacon_id > 0)
+      {
+        for(auto element : vec_compare_)
+        {
+          if(element.beacon_id == prev_beacon_id)
+          {
+            element.print();
+            break ;
+          }
+        }
+
+      }
+
+      prev_beacon_id = beacon.beacon_id;
+
+    }
+    else
+    {
+      // find element in vec_compare_
+      for(auto &element : vec_compare_)
+      {
+        if(element.beacon_id == beacon.beacon_id)
+        {
+          element.atp_count ++;
+          element.atp_calc_odom2 = atp_ptr->atp_calc_odom;
+          element.our_odom2 = myodom_ptr->total_odom;
+          element.atp_t2 = atp_ptr->header.stamp.sec + atp_ptr->header.stamp.nsec * (1e-9);
+          element.our_t2 = myodom_ptr->header.stamp.sec + myodom_ptr->header.stamp.nsec * (1e-9);
+          break ;
+        }
+      }
+      
+    }
+
+    return ;
+  }
+#endif
+
   static double atp_calc_odom = 0.0;
   if(atp_calc_odom < 1e-6)
   {

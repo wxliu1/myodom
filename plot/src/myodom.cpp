@@ -2,8 +2,16 @@
 
 #include "myodom.h"
 #include <boost/circular_buffer.hpp>
+#include <cmath>
+
+// #define _PRINT_BEACON_
+#define _CONFIDENCE_LEVEL_
+
+#define _PUBLISH_VELOCITY_DIRECTLY_
 
 using namespace liu::wx;
+
+static TCompare compare;
 
 CMyOdom::CMyOdom(const ros::NodeHandle& pnh)
   // : Node("CMyOdom")
@@ -24,16 +32,107 @@ CMyOdom::CMyOdom(const ros::NodeHandle& pnh)
   // pub_result_ = pnh_.subscribe("/plot", 10, &CMyOdom::cb_func, this);
   pub_result_ = pnh_.advertise<myresult::MyResult>("/plot", 10);
  
+  keyboard_command_process = std::thread(&CMyOdom::command, this);
 }
 
-#define _PUBLISH_VELOCITY_DIRECTLY_
+CMyOdom::~CMyOdom()
+{
+  keyboard_command_process.detach();
+}
+
+void CMyOdom::command()
+{
+  while (1)
+  {
+
+    char c = getchar();
+    if (c == 's')
+    {
+      std::cout << "press 's'" << std::endl;
+      if(compare.atp_count > 0)
+      {
+        std::cout << "print the last comparison.\n";
+        compare.print();
+        compare.reset();
+      }
+    }
+
+
+    std::chrono::milliseconds dura(500);
+    std::this_thread::sleep_for(dura);
+  }
+}
+
+
 
 // void CMyOdom::OdomCb(const myodom::msg::MyOdom::SharedPtr &myodom_ptr,
 //         const atp_info::msg::Atp::SharedPtr &atp_ptr)
 void CMyOdom::OdomCb(const myodom::MyOdomConstPtr &myodom_ptr,
-        const atp_info::atpConstPtr &atp_ptr)        
+        const atp_info::atpConstPtr &atp_ptr)   
 {
   // std::cout << "received msgs.\n";
+
+#ifdef _CONFIDENCE_LEVEL_
+  // static TCompare compare;
+  bool confidence_coefficient = myodom_ptr->confidence_coefficient;
+  if(!confidence_coefficient)
+  {
+    // print odom
+    if(compare.atp_count > 0)
+    {
+      compare.print();
+      compare.reset();
+    }
+  }
+  else
+  {
+  #if 0  
+    if(compare.atp_count == 0)
+    {
+      compare.atp_count = 1;
+      compare.atp_calc_odom1 = atp_ptr->atp_calc_odom;
+      compare.our_odom1 = myodom_ptr->total_odom;
+      compare.atp_t1 = atp_ptr->header.stamp.sec + atp_ptr->header.stamp.nsec * (1e-9);
+      compare.our_t1 = myodom_ptr->header.stamp.sec + myodom_ptr->header.stamp.nsec * (1e-9);
+    }
+    else
+    {
+      compare.atp_count ++;
+      compare.atp_calc_odom2 = atp_ptr->atp_calc_odom;
+      compare.our_odom2 = myodom_ptr->total_odom;
+      compare.atp_t2 = atp_ptr->header.stamp.sec + atp_ptr->header.stamp.nsec * (1e-9);
+      compare.our_t2 = myodom_ptr->header.stamp.sec + myodom_ptr->header.stamp.nsec * (1e-9);
+    }
+  #endif
+
+    compare.atp_count ++;
+    compare.atp_odom += atp_ptr->atp_period_odom / 100.0;
+    compare.our_odom += myodom_ptr->period_odom;
+
+    // compare.atp_duration += atp_ptr->atp_period_odom * 1.0 / atp_ptr->atp_speed; //if speed is 0 than NaN come out.
+    compare.atp_duration += 0.2;
+    compare.our_duration += myodom_ptr->delta_time;
+
+    // if(std::isnan(atp_ptr->atp_period_odom * 1.0 / atp_ptr->atp_speed) || std::isnan(compare.atp_duration))
+    // {
+    //   std::cout << "atp_speed :" << atp_ptr->atp_speed << " atp_ptr->atp_period_odom : " << atp_ptr->atp_period_odom << std::endl;
+    // }
+
+    compare.atp_total_count ++;
+    compare.atp_total_odom += atp_ptr->atp_period_odom / 100.0;
+    compare.our_total_odom += myodom_ptr->period_odom;
+
+    // compare.atp_duration += atp_ptr->atp_period_odom * 1.0 / atp_ptr->atp_speed; //if speed is 0 than NaN come out.
+    compare.atp_total_duration += 0.2;
+    compare.our_total_duration += myodom_ptr->delta_time;
+
+    
+  }
+
+  return;
+#endif
+
+
 #ifdef _PRINT_BEACON_
   //if(1)
   {

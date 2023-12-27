@@ -5,7 +5,7 @@
 #include <cmath>
 
 // #define _PRINT_BEACON_
-#define _CONFIDENCE_LEVEL_
+// #define _CONFIDENCE_LEVEL_
 
 #define _PUBLISH_VELOCITY_DIRECTLY_
 
